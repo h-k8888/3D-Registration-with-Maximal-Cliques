@@ -204,6 +204,7 @@ void feature_matching(PointCloudPtr& cloud_source, PointCloudPtr& cloud_target,
         }
     }
     //
+	cout << "kdtree search" << endl;
     pcl::KdTreeFLANN<pcl::FPFHSignature33> kdtree;
     vector<int>Idx;
     vector<float>Dist;

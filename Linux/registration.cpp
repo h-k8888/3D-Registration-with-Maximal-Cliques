@@ -1442,6 +1442,7 @@ bool registration(PointCloudPtr& src, PointCloudPtr& des, vector<Corre_3DMatch>&
     std::chrono::time_point<std::chrono::system_clock> start, end;
     std::chrono::duration<double> elapsed_time, total_time;
 
+	cout << "start graph construction: " << endl;
     start = std::chrono::system_clock::now();
     Eigen::MatrixXf Graph = Graph_construction(correspondence, resolution, sc2, cmp_thresh);
     end = std::chrono::system_clock::now();

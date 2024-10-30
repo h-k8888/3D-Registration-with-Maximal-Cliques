@@ -129,6 +129,10 @@ vector<string> analyse(const string& name, const string& result_scene, const str
 }
 
 void demo(){
+
+	std::chrono::time_point<std::chrono::system_clock> start, end;
+	std::chrono::duration<double> elapsed_time, total_time;
+
     PointCloudPtr src_cloud(new pcl::PointCloud<pcl::PointXYZ>);
     PointCloudPtr des_cloud(new pcl::PointCloud<pcl::PointXYZ>);
     PointCloudPtr new_src_cloud(new pcl::PointCloud<pcl::PointXYZ>);
@@ -138,26 +142,52 @@ void demo(){
     string des_path = "demo/des.pcd";
     pcl::io::loadPCDFile(src_path, *src_cloud);
     pcl::io::loadPCDFile(des_path, *des_cloud);
+	cout << *src_cloud << endl;
+	cout << *des_cloud << endl;
     float src_resolution = MeshResolution_mr_compute(src_cloud);
     float des_resolution = MeshResolution_mr_compute(des_cloud);
     float resolution = (src_resolution + des_resolution) / 2;
 
-    float downsample = 5 * resolution;
+    float downsample = 17 * resolution; /// very important parameter
+	cout << "downsample resolution: " << downsample << endl;
+	start = std::chrono::system_clock::now();
     Voxel_grid_downsample(src_cloud, new_src_cloud, downsample);
     Voxel_grid_downsample(des_cloud, new_des_cloud, downsample);
+	end = std::chrono::system_clock::now();
+	elapsed_time = end - start;
+	printf("[Voxel_grid_downsample] time: %.6fs\n", elapsed_time.count());
+	total_time += elapsed_time;
+
+	start = std::chrono::system_clock::now();
     vector<vector<float>> src_feature, des_feature;
     FPFH_descriptor(new_src_cloud, downsample*5, src_feature);
     FPFH_descriptor(new_des_cloud, downsample*5, des_feature);
+	end = std::chrono::system_clock::now();
+	elapsed_time = end - start;
+	printf("[FPFH_descriptor] time: %.6fs\n", elapsed_time.count());
+	total_time += elapsed_time;
 
-    vector<Corre_3DMatch>correspondence;
+	cout << "feature_matching " << endl;
+	start = std::chrono::system_clock::now();
+	vector<Corre_3DMatch>correspondence;
     feature_matching(new_src_cloud, new_des_cloud, src_feature, des_feature, correspondence);
+	end = std::chrono::system_clock::now();
+	elapsed_time = end - start;
+	printf("[feature_matching] correspondence size: %d, time: %.6fs\n", (int)correspondence.size(), elapsed_time.count());
+	total_time += elapsed_time;
 
     vector<double>ov_lable;
     ov_lable.resize((int)correspondence.size());
     
     folderPath = "demo/result";
     cout << "Start registration." << endl;
+	start = std::chrono::system_clock::now();
     registration(src_cloud, des_cloud, correspondence, ov_lable, folderPath, resolution,0.99);
+	// end = std::chrono::system_clock::now();
+	// elapsed_time = end - start;
+	// printf("[registration] time: %.6fs\n", elapsed_time.count());
+	// total_time += elapsed_time;
+
     //clear data
     src_cloud.reset(new pcl::PointCloud<pcl::PointXYZ>);
     des_cloud.reset(new pcl::PointCloud<pcl::PointXYZ>);
